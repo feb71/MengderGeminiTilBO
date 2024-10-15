@@ -1,4 +1,3 @@
-
 import os
 import pandas as pd
 import xml.etree.ElementTree as ET
@@ -7,9 +6,9 @@ from io import BytesIO
 
 # Function to replace post IDs in uploaded XML files
 def replace_post_ids(csv_file, uploaded_xml_files):
-    # Read the CSV file with semicolon separator
+    # Read the CSV file with semicolon separator and ensure Postnr is treated as string
     try:
-        df = pd.read_csv(csv_file, sep=';')
+        df = pd.read_csv(csv_file, sep=';', dtype={'Postnr': str, 'Id': str})
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return
@@ -20,7 +19,7 @@ def replace_post_ids(csv_file, uploaded_xml_files):
         return
 
     # Create a mapping of Postnr to Id from the CSV file
-    id_mapping = {str(row['Postnr']).strip(): str(row['Id']).strip() for index, row in df.iterrows()}
+    id_mapping = {row['Postnr'].strip(): row['Id'].strip() for _, row in df.iterrows()}
 
     # Process each uploaded XML file
     for uploaded_file in uploaded_xml_files:
