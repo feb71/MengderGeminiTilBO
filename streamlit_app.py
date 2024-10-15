@@ -1,12 +1,11 @@
-import os
 import pandas as pd
 import xml.etree.ElementTree as ET
-import streamlit as st
 from io import BytesIO
+import streamlit as st
 
-# Function to replace post IDs in uploaded XML files
+# Function to replace PostIds in uploaded XML files based on a CSV mapping
 def replace_post_ids(csv_file, uploaded_xml_files):
-    # Read the CSV file with semicolon separator and ensure Postnr is treated as string
+    # Load the CSV file with semicolon separator and ensure Postnr is treated as string
     try:
         df = pd.read_csv(csv_file, sep=';', dtype={'Postnr': str, 'Id': str})
     except Exception as e:
@@ -28,15 +27,16 @@ def replace_post_ids(csv_file, uploaded_xml_files):
             root = tree.getroot()
             modified = False
 
-            # Search and replace PostNr values in the XML file
-            for element in root.iter('Post'):
-                postnr_element = element.find('PostNr')
-                if postnr_element is not None:
+            # Search and replace PostId values in the XML file based on PostNr
+            for post in root.iter('Post'):
+                postnr_element = post.find('PostNr')
+                postid_element = post.find('PostId')
+                if postnr_element is not None and postid_element is not None:
                     postnr_value = postnr_element.text.strip()
                     if postnr_value in id_mapping:
-                        postnr_element.text = id_mapping[postnr_value]
+                        postid_element.text = id_mapping[postnr_value]
                         modified = True
-            
+
             # Save the modified XML to a downloadable file
             if modified:
                 output = BytesIO()
@@ -55,7 +55,7 @@ def replace_post_ids(csv_file, uploaded_xml_files):
 
 # Streamlit UI
 st.title("Post ID Replacement Tool")
-st.write("Upload a CSV file and XML files to replace post IDs.")
+st.write("Upload a CSV file and XML files to replace Post IDs based on PostNr.")
 
 csv_file = st.file_uploader("Upload CSV file", type=["csv"])
 uploaded_xml_files = st.file_uploader("Upload XML files", type=["xml"], accept_multiple_files=True)
